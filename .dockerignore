@@ -1,0 +1,28 @@
+# Exclude build output
+bin/
+*.class
+
+# Exclude IDE files
+.vscode/
+.idea/
+*.iml
+
+# Exclude OS files
+.DS_Store
+Thumbs.db
+
+# Exclude Git files
+.git/
+.gitignore
+
+# Exclude documentation
+README.md
+*.md
+
+# Exclude Docker files (except Dockerfile)
+docker-compose.yml
+.dockerignore
+
+# Exclude temporary files
+*.tmp
+*.log
