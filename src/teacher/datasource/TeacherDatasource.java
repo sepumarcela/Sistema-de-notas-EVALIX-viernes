@@ -1,210 +1,84 @@
 package teacher.datasource;
 
-import java.sql.*;
-import teacher.models.Teacher;
 import config.DatabaseConnection;
+import java.util.ArrayList;
+import java.util.List;
+import teacher.models.Teacher;
 
 public class TeacherDatasource {
 
-    private Connection connection;
+    private List<Teacher> teachers;
 
     public TeacherDatasource() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        DatabaseConnection db = DatabaseConnection.getInstance();
+
+        if (db.get("teachers") == null) {
+            db.put("teachers", new ArrayList<Teacher>());
+        }
+
+        this.teachers = (List<Teacher>) db.get("teachers");
         initializeData();
     }
 
     private void initializeData() {
-        try {
-            String checkQuery = "SELECT COUNT(*) as total FROM teachers";
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery(checkQuery);
-            
-            if (rs.next() && rs.getInt("total") == 0) {
-                create(new Teacher(1, "Carlos Méndez", "carlos.mendez@u.edu.co", "Matemáticas"));
-                create(new Teacher(2, "Ana García", "ana.garcia@u.edu.co", "Programación"));
-                create(new Teacher(3, "Luis Torres", "luis.torres@u.edu.co", "Base de Datos"));
-                System.out.println("✓ Datos de ejemplo insertados en teachers");
-            }
-            
-            rs.close();
-            stmt.close();
-        } catch (SQLException e) {
-            System.err.println("Error al inicializar datos de teachers: " + e.getMessage());
+        if (teachers.isEmpty()) {
+            teachers.add(new Teacher(1, "Carlos Méndez", "carlos.mendez@u.edu.co", "Matemáticas"));
+            teachers.add(new Teacher(2, "Laura Torres", "laura.torres@u.edu.co", "Literatura"));
+            teachers.add(new Teacher(3, "Andrés Ruiz", "andres.ruiz@u.edu.co", "Historia"));
+            System.out.println("✓ Datos de ejemplo insertados en teachers");
         }
     }
 
     // READ ALL
     public String all() {
-        try {
-            String query = "SELECT * FROM teachers ORDER BY id";
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
-            
-            StringBuilder sb = new StringBuilder();
-            int index = 0;
-            
-            while (rs.next()) {
-                sb.append("[").append(index).append("] ")
-                  .append(rs.getString("name"))
-                  .append(" | ID: ").append(rs.getInt("id"))
-                  .append(" | Email: ").append(rs.getString("email"))
-                  .append(" | Materia: ").append(rs.getString("subject"))
-                  .append("\n");
-                index++;
-            }
-            
-            rs.close();
-            stmt.close();
-            
-            return sb.length() > 0 ? sb.toString() : "No hay profesores registrados.";
-            
-        } catch (SQLException e) {
-            return "Error al listar profesores: " + e.getMessage();
+        if (teachers.isEmpty()) return "No hay profesores registrados.";
+
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (Teacher t : teachers) {
+            sb.append("[").append(i).append("] ")
+              .append(t.getName())
+              .append(" | ID: ").append(t.getId())
+              .append(" | Email: ").append(t.getEmail())
+              .append(" | Asignatura: ").append(t.getSubject())
+              .append("\n");
+            i++;
         }
+        return sb.toString();
     }
 
     // READ BY INDEX
     public String findByIndex(int index) {
-        try {
-            String queryIds = "SELECT id FROM teachers ORDER BY id LIMIT 1 OFFSET ?";
-            PreparedStatement pstmt = connection.prepareStatement(queryIds);
-            pstmt.setInt(1, index);
-            ResultSet rsId = pstmt.executeQuery();
-            
-            if (!rsId.next()) {
-                rsId.close();
-                pstmt.close();
-                return "Índice inválido.";
-            }
-            
-            int id = rsId.getInt("id");
-            rsId.close();
-            pstmt.close();
-            
-            String query = "SELECT * FROM teachers WHERE id = ?";
-            pstmt = connection.prepareStatement(query);
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                String result = "Profesor encontrado: " + rs.getString("name") 
-                       + " | ID: " + rs.getInt("id")
-                       + " | Email: " + rs.getString("email")
-                       + " | Materia: " + rs.getString("subject");
-                rs.close();
-                pstmt.close();
-                return result;
-            }
-            
-            rs.close();
-            pstmt.close();
-            return "Profesor no encontrado.";
-            
-        } catch (SQLException e) {
-            return "Error al buscar profesor: " + e.getMessage();
-        }
+        if (index < 0 || index >= teachers.size()) return "Índice inválido.";
+        Teacher t = teachers.get(index);
+        return "Profesor encontrado: " + t.getName() +
+               " | ID: " + t.getId() +
+               " | Email: " + t.getEmail() +
+               " | Asignatura: " + t.getSubject();
     }
 
     // CREATE
     public String create(Teacher teacher) {
-        try {
-            String query = "INSERT INTO teachers (id, name, email, subject) VALUES (?, ?, ?, ?)";
-            PreparedStatement pstmt = connection.prepareStatement(query);
-            
-            pstmt.setInt(1, teacher.getId());
-            pstmt.setString(2, teacher.getName());
-            pstmt.setString(3, teacher.getEmail());
-            pstmt.setString(4, teacher.getSubject());
-            
-            int rowsAffected = pstmt.executeUpdate();
-            pstmt.close();
-            
-            if (rowsAffected > 0) {
-                return "Profesor creado: " + teacher.getName() + " (ID: " + teacher.getId() + ")";
-            }
-            return "No se pudo crear el profesor.";
-            
-        } catch (SQLException e) {
-            if (e.getErrorCode() == 1062) {
+        for (Teacher t : teachers) {
+            if (t.getId() == teacher.getId() || t.getEmail().equalsIgnoreCase(teacher.getEmail())) {
                 return "Error: Ya existe un profesor con ese ID o email.";
             }
-            return "Error al crear profesor: " + e.getMessage();
         }
+        teachers.add(teacher);
+        return "Profesor agregado: " + teacher.getName() + " (ID: " + teacher.getId() + ")";
     }
 
     // UPDATE
-    public String update(int index, Teacher teacherIn) {
-        try {
-            String queryIds = "SELECT id FROM teachers ORDER BY id LIMIT 1 OFFSET ?";
-            PreparedStatement pstmt = connection.prepareStatement(queryIds);
-            pstmt.setInt(1, index);
-            ResultSet rsId = pstmt.executeQuery();
-            
-            if (!rsId.next()) {
-                rsId.close();
-                pstmt.close();
-                return "Índice inválido para actualizar.";
-            }
-            
-            int oldId = rsId.getInt("id");
-            rsId.close();
-            pstmt.close();
-            
-            String query = "UPDATE teachers SET id = ?, name = ?, email = ?, subject = ? WHERE id = ?";
-            pstmt = connection.prepareStatement(query);
-            
-            pstmt.setInt(1, teacherIn.getId());
-            pstmt.setString(2, teacherIn.getName());
-            pstmt.setString(3, teacherIn.getEmail());
-            pstmt.setString(4, teacherIn.getSubject());
-            pstmt.setInt(5, oldId);
-            
-            int rowsAffected = pstmt.executeUpdate();
-            pstmt.close();
-            
-            if (rowsAffected > 0) {
-                return "Profesor actualizado: " + teacherIn.getName() + " (ID: " + teacherIn.getId() + ")";
-            }
-            return "No se pudo actualizar el profesor.";
-            
-        } catch (SQLException e) {
-            return "Error al actualizar profesor: " + e.getMessage();
-        }
+    public String update(int index, Teacher updated) {
+        if (index < 0 || index >= teachers.size()) return "Índice inválido.";
+        teachers.set(index, updated);
+        return "Profesor actualizado: " + updated.getName() + " (ID: " + updated.getId() + ")";
     }
 
     // DELETE
     public String delete(int index) {
-        try {
-            String queryIds = "SELECT id, name FROM teachers ORDER BY id LIMIT 1 OFFSET ?";
-            PreparedStatement pstmt = connection.prepareStatement(queryIds);
-            pstmt.setInt(1, index);
-            ResultSet rsId = pstmt.executeQuery();
-            
-            if (!rsId.next()) {
-                rsId.close();
-                pstmt.close();
-                return "Índice inválido para eliminar.";
-            }
-            
-            int id = rsId.getInt("id");
-            String name = rsId.getString("name");
-            rsId.close();
-            pstmt.close();
-            
-            String query = "DELETE FROM teachers WHERE id = ?";
-            pstmt = connection.prepareStatement(query);
-            pstmt.setInt(1, id);
-            
-            int rowsAffected = pstmt.executeUpdate();
-            pstmt.close();
-            
-            if (rowsAffected > 0) {
-                return "Profesor eliminado: " + name + " (ID: " + id + ")";
-            }
-            return "No se pudo eliminar el profesor.";
-            
-        } catch (SQLException e) {
-            return "Error al eliminar profesor: " + e.getMessage();
-        }
+        if (index < 0 || index >= teachers.size()) return "Índice inválido.";
+        Teacher removed = teachers.remove(index);
+        return "Profesor eliminado: " + removed.getName() + " (ID: " + removed.getId() + ")";
     }
 }

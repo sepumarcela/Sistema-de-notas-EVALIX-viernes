@@ -1,69 +1,46 @@
 package config;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * Simulación de una base de datos ficticia en memoria.
+ */
 public class DatabaseConnection {
-    
-    // CAMBIA ESTOS DATOS POR LOS TUYOS
-    private static final String URL = "jdbc:mysql://localhost:3306/evalix_db";
-    private static final String USER = "root"; // Tu usuario de MySQL
-    private static final String PASSWORD = ""; // Tu contraseña de MySQL
-    
+
     private static DatabaseConnection instance;
-    private Connection connection;
-    
+    private Map<String, Object> dataStore; // "almacén" de tablas simuladas
+
     private DatabaseConnection() {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            this.connection = DriverManager.getConnection(URL, USER, PASSWORD);
-            System.out.println("✓ Conexión exitosa a la base de datos");
-        } catch (ClassNotFoundException e) {
-            System.err.println("✗ Error: Driver MySQL no encontrado");
-            e.printStackTrace();
-        } catch (SQLException e) {
-            System.err.println("✗ Error al conectar con la base de datos");
-            e.printStackTrace();
-        }
+        dataStore = new HashMap<>();
+        System.out.println("✓ Conexión ficticia creada (base de datos en memoria)");
     }
-    
+
     public static DatabaseConnection getInstance() {
         if (instance == null) {
             instance = new DatabaseConnection();
         }
         return instance;
     }
-    
-    public Connection getConnection() {
-        try {
-            if (connection == null || connection.isClosed()) {
-                connection = DriverManager.getConnection(URL, USER, PASSWORD);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al verificar/reestablecer conexión");
-            e.printStackTrace();
-        }
-        return connection;
+
+    /** Inserta o actualiza una “tabla” en memoria */
+    public void put(String tableName, Object data) {
+        dataStore.put(tableName, data);
     }
-    
+
+    /** Obtiene una “tabla” simulada */
+    public Object get(String tableName) {
+        return dataStore.get(tableName);
+    }
+
+    /** Cierra la conexión ficticia */
     public void closeConnection() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-                System.out.println("✓ Conexión cerrada correctamente");
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al cerrar la conexión");
-            e.printStackTrace();
-        }
+        dataStore.clear();
+        System.out.println("✓ Conexión ficticia cerrada correctamente");
     }
-    
+
+    /** Verifica si la “conexión” está activa */
     public boolean testConnection() {
-        try {
-            return connection != null && !connection.isClosed();
-        } catch (SQLException e) {
-            return false;
-        }
+        return dataStore != null;
     }
 }

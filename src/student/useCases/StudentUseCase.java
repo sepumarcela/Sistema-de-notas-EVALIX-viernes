@@ -1,99 +1,70 @@
 package student.useCases;
 
-import java.util.ArrayList;
-import java.util.List;
 import student.models.Student;
+import student.repositories.StudentRepository;
 
-// Contenedor de metodos y atributos
-public class StudentUseCase { // Clase de las acciones a realizar el Use Case
+public class StudentUseCase {
 
-    // Propiedad
-    private final List<Student> students; // Definicion Lista en memoria
+    private StudentRepository studentRepository;
 
     // Constructor
     public StudentUseCase() {
-        this.students = new ArrayList<>(); // Inicializacion - Preparar el uso de la lista.
+        this.studentRepository = new StudentRepository();
     }
 
-    // Read
-    public String all(){
+    // READ ALL
+    public String all() {
         try {
-            StringBuilder result = new StringBuilder(); // preparando la concatenacion de los strings.
-            for (int i = 0; i < students.size(); i++) { // Se procede a concatenar las tareas al string.
-                Student student = students.get(i); // Se obtiene la tarea.
-
-                result.append("Estudiante")
-                 .append(i + 1).append(": ") // Número del registro
-                  .append(student.getName())  // Nombre
-                  .append(" | Email: ").append(student.getEmail()) // Email
-                  .append(" | Programa: ").append(student.getProgram()) // Programa académico
-                  .append(" | ID: ").append(student.getId()) // ID del estudiante
-                  .append("\n"); // Nueva línea
-            }
-
-            return result.toString(); // Retornando la concatenacion de las tareas.
-            
+            return this.studentRepository.all();
         } catch (Exception e) {
-           return "Error al obtener los logins.";
+            return "Error al obtener los estudiantes: " + e.getMessage();
         }
     }
 
-    // Read by index
+    // READ BY INDEX
     public String findByIndex(int index) {
-    try {
-        Student studentFound = this.students.get(index);
-        return "Estudiante Encontrado: "
-        + studentFound.getName()
-        + " |ID: " + studentFound.getId()
-        +" | Email: " + studentFound.getEmail() 
-        +" | Programa: " + studentFound.getProgram() ;
-        }
-        catch (Exception e) {
+        try {
+            return this.studentRepository.findByIndex(index);
+        } catch (Exception e) {
             return "No ha sido posible acceder al estudiante.";
         }
     }
 
-    // Create
+    // CREATE
     public String create(Student student) {
         try {
-            this.students.add(student); // Uso de la lista
-            return "Estudiante creado correctamente:" 
-             + student.getName() 
-                + " | ID: " + student.getId()
-                + " | Email: " + student.getEmail()
-                + " | Programa: " + student.getProgram();
-        }
-        catch (Exception e) {
-            return "Ha ocurrido un error, por favor inténtelo de nuevo.";
+            return this.studentRepository.create(
+                student.getId(),
+                student.getName(),
+                student.getEmail(),
+                student.getProgram()
+            );
+        } catch (Exception e) {
+            return "Ha ocurrido un error, por favor inténtelo de nuevo: " + e.getMessage();
         }
     }
 
-    // Update
-    public String update(int index, Student studentIn) {
+    // UPDATE
+    public String update(int index, Student student) {
         try {
-        Student studentFound = this.students.get(index);
-
-        studentFound.setId(studentIn.getId());
-        studentFound.setName(studentIn.getName());
-        studentFound.setEmail(studentIn.getEmail());
-        studentFound.setProgram(studentIn.getProgram());
-             
-        return "Estudiante actualizado correctamente:" + studentFound.getName() + " | Email:" + studentFound.getEmail()+
-          " | Programa: " + studentFound.getProgram();
-        }
-        catch (Exception e) {
-            return "Ha ocurrido un error al actualizar el estudiante, por favor inténtelo de nuevo.";
+            return this.studentRepository.update(
+                index,
+                student.getId(),
+                student.getName(),
+                student.getEmail(),
+                student.getProgram()
+            );
+        } catch (Exception e) {
+            return "Ha ocurrido un error al actualizar el estudiante: " + e.getMessage();
         }
     }
 
-
-    // Delete
-    public String delete(int index){
-       try {
-            students.remove(index);
-            return "Se ha eliminado al estudiante correctamente.";
-       } catch (Exception e) {
-            return "no ha sido posible eliminar al estudiante.";
-       }
+    // DELETE
+    public String delete(int index) {
+        try {
+            return this.studentRepository.delete(index);
+        } catch (Exception e) {
+            return "No ha sido posible eliminar al estudiante.";
+        }
     }
 }

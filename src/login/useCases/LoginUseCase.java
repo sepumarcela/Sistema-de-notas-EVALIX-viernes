@@ -1,87 +1,68 @@
 package login.useCases;
 
-import java.util.ArrayList;
-import java.util.List;
 import login.models.Login;
+import login.repositories.LoginRepository;
 
-// Contenedor de metodos y atributos
-public class LoginUseCase { // Clase de las acciones a realizar el Use Case
+public class LoginUseCase {
 
-    // Propiedad
-    private final List<Login> logins; // Definicion Lista en memoria
+    private LoginRepository loginRepository;
 
     // Constructor
     public LoginUseCase() {
-        this.logins = new ArrayList<>(); // Inicializacion - Preparar el uso de la lista.
+        this.loginRepository = new LoginRepository();
     }
 
-    // Read
-    public String all(){
+    // READ ALL
+    public String all() {
         try {
-            StringBuilder result = new StringBuilder(); // preparando la concatenacion de los strings.
-            for (int i = 0; i < logins.size(); i++) { // Se procede a concatenar las tareas al string.
-                Login login = logins.get(i); // Se obtiene la tarea.
-                result.append("Usuario ")
-                .append(i)
-                .append(": ")
-                .append(login.getEmail())
-                .append(" Tipo: ")
-                .append(login.getTipoCliente())
-                .append("\n"); // Concatenar la tarea al string.
-            }
-
-            return result.toString(); // Retornando la concatenacion de las tareas.
-            
+            return this.loginRepository.all();
         } catch (Exception e) {
-           return "Error al obtener los logins.";
+            return "Error al obtener los logins: " + e.getMessage();
         }
     }
 
-    // Read by index
+    // READ BY INDEX
     public String findByIndex(int index) {
-    try {
-        Login loginFound = this.logins.get(index);
-        return "Email Encontrado: " + loginFound.getEmail() + " | Selecciona una opción: " + loginFound.getPassword();
-        }
-        catch (Exception e) {
-            return "no ha sido posible acceder.";
+        try {
+            return this.loginRepository.findByIndex(index);
+        } catch (Exception e) {
+            return "No ha sido posible acceder.";
         }
     }
 
-    // Create
+    // CREATE
     public String create(Login login) {
         try {
-            this.logins.add(login); // Uso de la lista
-            return "Email Encontrado:" + login.getEmail() + " Selecciona una opción:" + login.getPassword();
-        }
-        catch (Exception e) {
-            return "Ha ocurrido un error, por favor intentelo nuevo";
+            return this.loginRepository.create(
+                login.getTipoCliente(),
+                login.getEmail(),
+                login.getPassword()
+            );
+        } catch (Exception e) {
+            return "Ha ocurrido un error, por favor inténtelo de nuevo: " + e.getMessage();
         }
     }
 
-    // Update
-    public String update(int index, Login loginIn) {
+    // UPDATE
+    public String update(int index, Login login) {
         try {
-        Login loginFound = this.logins.get(index);
-        loginFound.setEmail(loginIn.getEmail());
-        loginFound.setPassword(loginIn.getPassword());
-        loginFound.setTipoCliente(loginIn.getTipoCliente());
-             
-            return "Email Actualizado:" + loginFound.getEmail() + " Selecciona una opción:" + loginFound.getTipoCliente();
-        }
-        catch (Exception e) {
-            return "Ha ocurrido un error, por favor intentelo nuevo";
+            return this.loginRepository.update(
+                index,
+                login.getTipoCliente(),
+                login.getEmail(),
+                login.getPassword()
+            );
+        } catch (Exception e) {
+            return "Ha ocurrido un error, por favor inténtelo de nuevo: " + e.getMessage();
         }
     }
 
-
-    // Delete
-    public String delete(int index){
-       try {
-            logins.remove(index);
-            return "Se ha eliminado la tarea correctamente.";
-       } catch (Exception e) {
-            return "no ha sido posible eliminar la tarea.";
-       }
+    // DELETE
+    public String delete(int index) {
+        try {
+            return this.loginRepository.delete(index);
+        } catch (Exception e) {
+            return "No ha sido posible eliminar el login.";
+        }
     }
 }

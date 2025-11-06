@@ -1,6 +1,7 @@
 package student.repositories;
 
 import student.datasource.StudentDatasource;
+import student.models.Student;
 
 public class StudentRepository {
 
@@ -23,12 +24,17 @@ public class StudentRepository {
 
     // CREAR NUEVO
     public String create(int id, String name, String email, String program) {
-        return this.studentDatasource.create(id, name, email, program);
+        return this.studentDatasource.create(
+            new Student(id, name, email, program)
+        );
     }
 
     // ACTUALIZAR EXISTENTE
     public String update(int index, int id, String name, String email, String program) {
-        return this.studentDatasource.update(index, id, name, email, program);
+        return this.studentDatasource.update(
+            index, 
+            new Student(id, name, email, program)
+        );
     }
 
     // ELIMINAR POR ÍNDICE

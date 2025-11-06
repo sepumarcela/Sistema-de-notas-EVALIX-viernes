@@ -1,210 +1,93 @@
 package student.datasource;
 
 import config.DatabaseConnection;
-import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import student.models.Student;
 
 public class StudentDatasource {
 
-    private Connection connection;
+    private List<Student> students;
 
     public StudentDatasource() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        DatabaseConnection db = DatabaseConnection.getInstance();
+
+        // Si no existe la “tabla” students, la creamos
+        if (db.get("students") == null) {
+            db.put("students", new ArrayList<Student>());
+        }
+
+        this.students = (List<Student>) db.get("students");
         initializeData();
     }
 
     private void initializeData() {
-        try {
-            String checkQuery = "SELECT COUNT(*) as total FROM students";
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery(checkQuery);
-            
-            if (rs.next() && rs.getInt("total") == 0) {
-                create(new Student(1, "Marcela Sepúlveda", "marcela@u.edu.co", "Ingeniería de Software"));
-                create(new Student(2, "Felipe Quintero", "felipe.quintero@u.edu.co", "Derecho"));
-                create(new Student(3, "Mariana Rivera", "mariana.rivera@u.edu.co", "Diseño"));
-                System.out.println("✓ Datos de ejemplo insertados en students");
-            }
-            
-            rs.close();
-            stmt.close();
-        } catch (SQLException e) {
-            System.err.println("Error al inicializar datos de students: " + e.getMessage());
+        if (students.isEmpty()) {
+            students.add(new Student(1, "Marcela Sepúlveda", "marcela@u.edu.co", "Ingeniería de Software"));
+            students.add(new Student(2, "Felipe Quintero", "felipe.quintero@u.edu.co", "Derecho"));
+            students.add(new Student(3, "Mariana Rivera", "mariana.rivera@u.edu.co", "Diseño"));
+            System.out.println("✓ Datos de ejemplo insertados en students");
         }
     }
 
     // READ ALL
     public String all() {
-        try {
-            String query = "SELECT * FROM students ORDER BY id";
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
-            
-            StringBuilder sb = new StringBuilder();
-            int index = 0;
-            
-            while (rs.next()) {
-                sb.append("[").append(index).append("] ")
-                  .append(rs.getString("name"))
-                  .append(" | ID: ").append(rs.getInt("id"))
-                  .append(" | Email: ").append(rs.getString("email"))
-                  .append(" | Programa: ").append(rs.getString("program"))
-                  .append("\n");
-                index++;
-            }
-            
-            rs.close();
-            stmt.close();
-            
-            return sb.length() > 0 ? sb.toString() : "No hay estudiantes registrados.";
-            
-        } catch (SQLException e) {
-            return "Error al listar estudiantes: " + e.getMessage();
+        if (students.isEmpty()) {
+            return "No hay estudiantes registrados.";
         }
+
+        StringBuilder sb = new StringBuilder();
+        int index = 0;
+        for (Student s : students) {
+            sb.append("[").append(index).append("] ")
+              .append(s.getName())
+              .append(" | ID: ").append(s.getId())
+              .append(" | Email: ").append(s.getEmail())
+              .append(" | Programa: ").append(s.getProgram())
+              .append("\n");
+            index++;
+        }
+        return sb.toString();
     }
 
     // READ BY INDEX
     public String findByIndex(int index) {
-        try {
-            String queryIds = "SELECT id FROM students ORDER BY id LIMIT 1 OFFSET ?";
-            PreparedStatement pstmt = connection.prepareStatement(queryIds);
-            pstmt.setInt(1, index);
-            ResultSet rsId = pstmt.executeQuery();
-            
-            if (!rsId.next()) {
-                rsId.close();
-                pstmt.close();
-                return "Índice inválido.";
-            }
-            
-            int id = rsId.getInt("id");
-            rsId.close();
-            pstmt.close();
-            
-            String query = "SELECT * FROM students WHERE id = ?";
-            pstmt = connection.prepareStatement(query);
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            
-            if (rs.next()) {
-                String result = "Estudiante encontrado: " + rs.getString("name") 
-                       + " | ID: " + rs.getInt("id")
-                       + " | Email: " + rs.getString("email")
-                       + " | Programa: " + rs.getString("program");
-                rs.close();
-                pstmt.close();
-                return result;
-            }
-            
-            rs.close();
-            pstmt.close();
-            return "Estudiante no encontrado.";
-            
-        } catch (SQLException e) {
-            return "Error al buscar estudiante: " + e.getMessage();
+        if (index < 0 || index >= students.size()) {
+            return "Índice inválido.";
         }
+        Student s = students.get(index);
+        return "Estudiante encontrado: " + s.getName()
+                + " | ID: " + s.getId()
+                + " | Email: " + s.getEmail()
+                + " | Programa: " + s.getProgram();
     }
 
     // CREATE
     public String create(Student student) {
-        try {
-            String query = "INSERT INTO students (id, name, email, program) VALUES (?, ?, ?, ?)";
-            PreparedStatement pstmt = connection.prepareStatement(query);
-            
-            pstmt.setInt(1, student.getId());
-            pstmt.setString(2, student.getName());
-            pstmt.setString(3, student.getEmail());
-            pstmt.setString(4, student.getProgram());
-            
-            int rowsAffected = pstmt.executeUpdate();
-            pstmt.close();
-            
-            if (rowsAffected > 0) {
-                return "Estudiante creado: " + student.getName() + " (ID: " + student.getId() + ")";
-            }
-            return "No se pudo crear el estudiante.";
-            
-        } catch (SQLException e) {
-            if (e.getErrorCode() == 1062) {
+        for (Student s : students) {
+            if (s.getId() == student.getId() || s.getEmail().equalsIgnoreCase(student.getEmail())) {
                 return "Error: Ya existe un estudiante con ese ID o email.";
             }
-            return "Error al crear estudiante: " + e.getMessage();
         }
+        students.add(student);
+        return "Estudiante creado: " + student.getName() + " (ID: " + student.getId() + ")";
     }
 
     // UPDATE
-    public String update(int index, Student studentIn) {
-        try {
-            String queryIds = "SELECT id FROM students ORDER BY id LIMIT 1 OFFSET ?";
-            PreparedStatement pstmt = connection.prepareStatement(queryIds);
-            pstmt.setInt(1, index);
-            ResultSet rsId = pstmt.executeQuery();
-            
-            if (!rsId.next()) {
-                rsId.close();
-                pstmt.close();
-                return "Índice inválido para actualizar.";
-            }
-            
-            int oldId = rsId.getInt("id");
-            rsId.close();
-            pstmt.close();
-            
-            String query = "UPDATE students SET id = ?, name = ?, email = ?, program = ? WHERE id = ?";
-            pstmt = connection.prepareStatement(query);
-            
-            pstmt.setInt(1, studentIn.getId());
-            pstmt.setString(2, studentIn.getName());
-            pstmt.setString(3, studentIn.getEmail());
-            pstmt.setString(4, studentIn.getProgram());
-            pstmt.setInt(5, oldId);
-            
-            int rowsAffected = pstmt.executeUpdate();
-            pstmt.close();
-            
-            if (rowsAffected > 0) {
-                return "Estudiante actualizado: " + studentIn.getName() + " (ID: " + studentIn.getId() + ")";
-            }
-            return "No se pudo actualizar el estudiante.";
-            
-        } catch (SQLException e) {
-            return "Error al actualizar estudiante: " + e.getMessage();
+    public String update(int index, Student updatedStudent) {
+        if (index < 0 || index >= students.size()) {
+            return "Índice inválido para actualizar.";
         }
+        students.set(index, updatedStudent);
+        return "Estudiante actualizado: " + updatedStudent.getName() + " (ID: " + updatedStudent.getId() + ")";
     }
 
     // DELETE
     public String delete(int index) {
-        try {
-            String queryIds = "SELECT id, name FROM students ORDER BY id LIMIT 1 OFFSET ?";
-            PreparedStatement pstmt = connection.prepareStatement(queryIds);
-            pstmt.setInt(1, index);
-            ResultSet rsId = pstmt.executeQuery();
-            
-            if (!rsId.next()) {
-                rsId.close();
-                pstmt.close();
-                return "Índice inválido para eliminar.";
-            }
-            
-            int id = rsId.getInt("id");
-            String name = rsId.getString("name");
-            rsId.close();
-            pstmt.close();
-            
-            String query = "DELETE FROM students WHERE id = ?";
-            pstmt = connection.prepareStatement(query);
-            pstmt.setInt(1, id);
-            
-            int rowsAffected = pstmt.executeUpdate();
-            pstmt.close();
-            
-            if (rowsAffected > 0) {
-                return "Estudiante eliminado: " + name + " (ID: " + id + ")";
-            }
-            return "No se pudo eliminar el estudiante.";
-            
-        } catch (SQLException e) {
-            return "Error al eliminar estudiante: " + e.getMessage();
+        if (index < 0 || index >= students.size()) {
+            return "Índice inválido para eliminar.";
         }
+        Student s = students.remove(index);
+        return "Estudiante eliminado: " + s.getName() + " (ID: " + s.getId() + ")";
     }
 }
