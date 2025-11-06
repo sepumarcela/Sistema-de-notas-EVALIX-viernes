@@ -1,8 +1,8 @@
 package teacher.repositories;
 
-import teacher.models.Teacher; // 👈 IMPORTANTE
-import java.util.List;
+import teacher.models.Teacher;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TeacherRepository {
 
@@ -46,3 +46,8 @@ public class TeacherRepository {
     // DELETE
     public void delete(int index) {
         if (index < 0 || index >= teachers.size()) {
+            throw new IndexOutOfBoundsException("Índice fuera de rango.");
+        }
+        teachers.remove(index);
+    }
+}

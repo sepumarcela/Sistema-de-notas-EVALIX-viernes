@@ -1,43 +1,41 @@
 package teacher.repositories;
 
+import java.util.List;
 import teacher.datasource.TeacherDatasource;
+import teacher.models.Teacher;
 
 public class TeacherRepository {
 
-    public TeacherDatasource teacherDatasource;
+    private TeacherDatasource teacherDatasource;
 
-    // CONSTRUCTOR
     public TeacherRepository() {
         this.teacherDatasource = new TeacherDatasource();
     }
 
     // OBTENER TODOS
-    public String all() {
-        return this.teacherDatasource.all();
+    public List<Teacher> all() {
+        return teacherDatasource.getAll();
     }
 
     // OBTENER POR ÍNDICE
-    public String findByIndex(int index) {
-        return this.teacherDatasource.findByIndex(index);
+    public Teacher findByIndex(int index) {
+        return teacherDatasource.getByIndex(index);
     }
 
     // CREAR NUEVO
-    public String create(int id, String name, String email, String subject) {
-        return this.teacherDatasource.create(
-            new teacher.models.Teacher(id, name, email, subject)
-        );
+    public void create(int id, String name, String email, String subject) {
+        Teacher newTeacher = new Teacher(id, name, email, subject);
+        teacherDatasource.add(newTeacher);
     }
 
     // ACTUALIZAR EXISTENTE
-    public String update(int index, int id, String name, String email, String subject) {
-        return this.teacherDatasource.update(
-            index, 
-            new teacher.models.Teacher(id, name, email, subject)
-        );
+    public void update(int index, int id, String name, String email, String subject) {
+        Teacher updatedTeacher = new Teacher(id, name, email, subject);
+        teacherDatasource.update(index, updatedTeacher);
     }
 
     // ELIMINAR POR ÍNDICE
-    public String delete(int index) {
-        return this.teacherDatasource.delete(index);
+    public void delete(int index) {
+        teacherDatasource.delete(index);
     }
 }
