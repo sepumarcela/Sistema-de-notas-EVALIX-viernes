@@ -3,17 +3,16 @@ package config;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Simulación de una base de datos ficticia en memoria.
- */
 public class DatabaseConnection {
-
+    
     private static DatabaseConnection instance;
-    private Map<String, Object> dataStore; // "almacén" de tablas simuladas
+    private Map<String, Object> database;
+    private boolean connected;
 
     private DatabaseConnection() {
-        dataStore = new HashMap<>();
-        System.out.println("✓ Conexión ficticia creada (base de datos en memoria)");
+        this.database = new HashMap<>();
+        this.connected = true;
+        System.out.println("✅ Conexión a base de datos establecida");
     }
 
     public static DatabaseConnection getInstance() {
@@ -23,24 +22,21 @@ public class DatabaseConnection {
         return instance;
     }
 
-    /** Inserta o actualiza una “tabla” en memoria */
-    public void put(String tableName, Object data) {
-        dataStore.put(tableName, data);
+    public String testConnection() {
+        return connected ? "✅ Conectado" : "❌ Desconectado";
     }
 
-    /** Obtiene una “tabla” simulada */
-    public Object get(String tableName) {
-        return dataStore.get(tableName);
+    public void put(String key, Object value) {
+        database.put(key, value);
     }
 
-    /** Cierra la conexión ficticia */
+    public Object get(String key) {
+        return database.get(key);
+    }
+
     public void closeConnection() {
-        dataStore.clear();
-        System.out.println("✓ Conexión ficticia cerrada correctamente");
-    }
-
-    /** Verifica si la “conexión” está activa */
-    public boolean testConnection() {
-        return dataStore != null;
+        connected = false;
+        database.clear();
+        System.out.println("🔌 Conexión cerrada");
     }
 }

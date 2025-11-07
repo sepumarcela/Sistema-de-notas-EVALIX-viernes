@@ -22,4 +22,10 @@ public class Teacher {
     public void setName(String name) { this.name = name; }
     public void setEmail(String email) { this.email = email; }
     public void setSubject(String subject) { this.subject = subject; }
+
+    @Override
+public String toString() {
+    return String.format("ID: %d | %s | Email: %s | Materia: %s", 
+                         id, name, email, subject);
+}
 }

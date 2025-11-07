@@ -1,48 +1,36 @@
-package teacher.repositories;
+package teacher.controllers;
 
-import teacher.models.Teacher; // 👈 IMPORTANTE
-import java.util.List;
-import java.util.ArrayList;
+import teacher.models.Teacher;
+import teacher.useCases.TeacherUseCase;
 
-public class TeacherRepository {
+/**
+ * Controlador que gestiona las “rutas” del CRUD de Teacher
+ */
+public class TeacherController {
 
-    // Simulación de base de datos en memoria
-    private List<Teacher> teachers = new ArrayList<>();
+    public TeacherUseCase teacherUseCase;
 
-    // READ ALL
+    public TeacherController() {
+        this.teacherUseCase = new TeacherUseCase();
+    }
+
     public String all() {
-        if (teachers.isEmpty()) {
-            return "No hay profesores registrados.";
-        }
-        StringBuilder result = new StringBuilder("Lista de profesores:\n");
-        for (int i = 0; i < teachers.size(); i++) {
-            result.append(i).append(": ").append(teachers.get(i).getName()).append("\n");
-        }
-        return result.toString();
+        return this.teacherUseCase.all();
     }
 
-    // READ BY INDEX
     public String findByIndex(int index) {
-        if (index < 0 || index >= teachers.size()) {
-            return "Índice fuera de rango.";
-        }
-        Teacher t = teachers.get(index);
-        return "Profesor encontrado: " + t.getName();
+        return this.teacherUseCase.findByIndex(index);
     }
 
-    // CREATE
-    public void create(Teacher teacher) {
-        teachers.add(teacher);
+    public String create(int id, String name, String email, String subject) {
+        return this.teacherUseCase.create(new Teacher(id, name, email, subject));
     }
 
-    // UPDATE
-    public void update(int index, Teacher teacher) {
-        if (index < 0 || index >= teachers.size()) {
-            throw new IndexOutOfBoundsException("Índice fuera de rango.");
-        }
-        teachers.set(index, teacher);
+    public String update(int index, int id, String name, String email, String subject) {
+        return this.teacherUseCase.update(index, new Teacher(id, name, email, subject));
     }
 
-    // DELETE
-    public void delete(int index) {
-        if (index < 0 || index >= teachers.size()) {
+    public String delete(int index) {
+        return this.teacherUseCase.delete(index);
+    }
+}

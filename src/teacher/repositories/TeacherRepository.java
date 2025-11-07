@@ -1,41 +1,69 @@
 package teacher.repositories;
 
+import config.DatabaseConnection;
+import java.util.ArrayList;
 import java.util.List;
-import teacher.datasource.TeacherDatasource;
 import teacher.models.Teacher;
 
+/**
+ * Simula el repositorio que accede a la base de datos ficticia
+ */
 public class TeacherRepository {
 
-    private TeacherDatasource teacherDatasource;
+    private final String TABLE_NAME = "teachers";
+    private DatabaseConnection db;
 
     public TeacherRepository() {
-        this.teacherDatasource = new TeacherDatasource();
+        this.db = DatabaseConnection.getInstance();
+
+        // Si no existe la “tabla”, se crea
+        if (this.db.get(TABLE_NAME) == null) {
+            this.db.put(TABLE_NAME, new ArrayList<Teacher>());
+            System.out.println("Tabla ficticia 'teachers' creada.");
+        }
     }
 
-    // OBTENER TODOS
+    @SuppressWarnings("unchecked")
+    private List<Teacher> getTable() {
+        return (List<Teacher>) db.get(TABLE_NAME);
+    }
+
     public List<Teacher> all() {
-        return teacherDatasource.getAll();
+        return getTable();
     }
 
-    // OBTENER POR ÍNDICE
     public Teacher findByIndex(int index) {
-        return teacherDatasource.getByIndex(index);
+        List<Teacher> teachers = getTable();
+        if (index >= 0 && index < teachers.size()) {
+            return teachers.get(index);
+        }
+        return null;
     }
 
-    // CREAR NUEVO
-    public void create(int id, String name, String email, String subject) {
-        Teacher newTeacher = new Teacher(id, name, email, subject);
-        teacherDatasource.add(newTeacher);
+    public String create(Teacher teacher) {
+        List<Teacher> teachers = getTable();
+        teachers.add(teacher);
+        db.put(TABLE_NAME, teachers);
+        return "Profesor agregado correctamente.";
     }
 
-    // ACTUALIZAR EXISTENTE
-    public void update(int index, int id, String name, String email, String subject) {
-        Teacher updatedTeacher = new Teacher(id, name, email, subject);
-        teacherDatasource.update(index, updatedTeacher);
+    public String update(int index, Teacher teacher) {
+        List<Teacher> teachers = getTable();
+        if (index >= 0 && index < teachers.size()) {
+            teachers.set(index, teacher);
+            db.put(TABLE_NAME, teachers);
+            return "Profesor actualizado correctamente.";
+        }
+        return "❌ Índice inválido.";
     }
 
-    // ELIMINAR POR ÍNDICE
-    public void delete(int index) {
-        teacherDatasource.delete(index);
+    public String delete(int index) {
+        List<Teacher> teachers = getTable();
+        if (index >= 0 && index < teachers.size()) {
+            teachers.remove(index);
+            db.put(TABLE_NAME, teachers);
+            return "Profesor eliminado correctamente.";
+        }
+        return "❌ No se pudo eliminar: índice fuera de rango.";
     }
 }
